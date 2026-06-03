@@ -15,24 +15,25 @@ X_val = pd.read_parquet("data/X_val.parquet")
 with open("models/xgb_baseline.pkl", "rb") as f:
     model = pickle.load(f)
 
-explainer   = shap.TreeExplainer(model)
-sample      = X_val.sample(n=5000, random_state=42)
-shap_values = explainer.shap_values(sample)
+explainer  = shap.TreeExplainer(model)
+sample     = X_val.sample(n=5000, random_state=42)
+
+# Explanation object for waterfall; raw array for summary plot
+shap_exp    = explainer(sample)
+shap_values = shap_exp.values
 
 shap.summary_plot(shap_values, sample, show=False)
 plt.savefig("shap_outputs/global_importance.png", bbox_inches="tight", dpi=150)
 plt.close()
 
-shap.force_plot(
-    explainer.expected_value, shap_values[0],
-    sample.iloc[0], matplotlib=True, show=False
-)
-plt.savefig("shap_outputs/local_force_plot.png", bbox_inches="tight", dpi=150)
+# Waterfall plot — cleaner than force plot for portfolios
+shap.plots.waterfall(shap_exp[0], show=False)
+plt.savefig("shap_outputs/waterfall_plot.png", bbox_inches="tight", dpi=150)
 plt.close()
 
 wandb.log({
     "shap_global_importance": wandb.Image("shap_outputs/global_importance.png"),
-    "shap_local_force_plot":  wandb.Image("shap_outputs/local_force_plot.png")
+    "shap_waterfall_plot":    wandb.Image("shap_outputs/waterfall_plot.png")
 })
 
 def audit_trail(shap_row, feat_row, n=5):
