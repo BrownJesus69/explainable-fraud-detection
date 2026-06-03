@@ -9,7 +9,9 @@ load_dotenv()
 
 app = FastAPI(title="Fraud Detection API")
 
-with open("../models/xgb_robust.pkl", "rb") as f:
+import os
+MODEL_PATH = os.environ.get("MODEL_PATH", "../models/xgb_robust.pkl")
+with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
 explainer   = shap.TreeExplainer(model)
 FEATURES    = model.get_booster().feature_names
@@ -30,6 +32,6 @@ def score(txn: Transaction):
     audit     = [f"{feat}: {val:+.3f}" for val, feat in top5]
     return {
         "fraud_probability": round(prob, 4),
-        "decision":          "REVIEW" if prob > 0.5 else "PASS",
+        "decision":          "REVIEW" if prob > 0.828 else "PASS",
         "top_shap_factors":  audit
     }
