@@ -7,4 +7,7 @@ python 05_adversarial.py
 python 06_robustness_eval.py
 python 07_retrain_robust.py
 python 08_drift_check.py
-Write-Host "Pipeline complete. Launch API with: cd api && uvicorn main:app --reload --port 8000"
+python 09_lgbm_compare.py
+Write-Host "Pipeline complete."
+Write-Host "Launch API:       cd api && uvicorn main:app --reload --port 8000"
+Write-Host "Launch dashboard: streamlit run streamlit_app.py"

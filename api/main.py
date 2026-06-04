@@ -1,37 +1,37 @@
+import os
 import pickle
+from typing import Any, Dict
+
 import shap
 import pandas as pd
 from fastapi import FastAPI
-from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = FastAPI(title="Fraud Detection API")
 
-import os
 MODEL_PATH = os.environ.get("MODEL_PATH", "../models/xgb_robust.pkl")
 with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
-explainer   = shap.TreeExplainer(model)
-FEATURES    = model.get_booster().feature_names
+explainer = shap.TreeExplainer(model)
+FEATURES  = model.get_booster().feature_names
 
-class Transaction(BaseModel):
-    features: dict
+THRESHOLD = 0.828
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 @app.post("/score")
-def score(txn: Transaction):
-    row       = pd.DataFrame([txn.features]).reindex(columns=FEATURES, fill_value=-999)
+def score(features: Dict[str, Any]):
+    row       = pd.DataFrame([features]).reindex(columns=FEATURES, fill_value=-999)
     prob      = float(model.predict_proba(row)[0][1])
     shap_vals = explainer.shap_values(row)[0]
     top5      = sorted(zip(shap_vals, FEATURES), reverse=True)[:5]
     audit     = [f"{feat}: {val:+.3f}" for val, feat in top5]
     return {
         "fraud_probability": round(prob, 4),
-        "decision":          "REVIEW" if prob > 0.828 else "PASS",
+        "decision":          "REVIEW" if prob > THRESHOLD else "PASS",
         "top_shap_factors":  audit
     }

@@ -9,7 +9,11 @@ df["hour"]    = (df["TransactionDT"] / 3600).astype(int) % 24
 df["day"]     = (df["TransactionDT"] / 86400).astype(int) % 7
 df["amt_log"] = np.log1p(df["TransactionAmt"])
 
-df = df[df.columns[df.isnull().mean() < 0.8]]
+n_before  = df.shape[1]
+df        = df[df.columns[df.isnull().mean() < 0.8]]
+n_dropped = n_before - df.shape[1]
+print(f"Dropped {n_dropped} columns with >80% null values")
+
 num_cols = df.select_dtypes(include="number").columns
 cat_cols = df.select_dtypes(exclude="number").columns
 df[num_cols] = df[num_cols].fillna(-999)
@@ -17,6 +21,7 @@ df[cat_cols] = df[cat_cols].fillna("missing")
 
 for col in cat_cols:
     df[col] = LabelEncoder().fit_transform(df[col].astype(str))
+print(f"Label-encoded {len(cat_cols)} categorical columns")
 
 X = df.drop(columns=["isFraud", "TransactionID", "TransactionDT"], errors="ignore")
 y = df["isFraud"]
