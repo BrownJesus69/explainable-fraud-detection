@@ -11,7 +11,8 @@ load_dotenv()
 
 app = FastAPI(title="Fraud Detection API")
 
-MODEL_PATH = os.environ.get("MODEL_PATH", "../models/xgb_robust.pkl")
+_BASE_DIR  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(_BASE_DIR, "models", "xgb_robust.pkl"))
 with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
 explainer = shap.TreeExplainer(model)
